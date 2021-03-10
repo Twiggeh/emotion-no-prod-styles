@@ -6,7 +6,7 @@ import { URL } from 'url';
 const __dirname = decodeURI(dirname(new URL(import.meta.url).pathname));
 export const PROJECT_ROOT = resolve(__dirname, '../../');
 
-const port = 5000;
+const port = 5050;
 
 const app = express();
 

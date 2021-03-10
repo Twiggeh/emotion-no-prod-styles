@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'path';
 import { URL } from 'url';
 const __dirname = decodeURI(dirname(new URL(import.meta.url).pathname));
 export const PROJECT_ROOT = resolve(__dirname, '../../');
-const port = 5000;
+const port = 5050;
 const app = express();
 app.get('/public/*', (req, res) => {
 	res.sendFile(join(PROJECT_ROOT, 'client', 'dist', req.url));

@@ -6,21 +6,26 @@ const mode = process.env.NODE_ENV;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const webpack = require('webpack');
+const PreactRefreshPlugin = require('@prefresh/webpack');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { cwd } = require('process');
+
 console.log(mode);
+const curProcess = cwd();
 
 module.exports = {
-	entry: ['react-hot-loader/patch', path.resolve(__dirname, '../src')],
+	entry: path.resolve(curProcess, 'src'),
 	output: {
-		path: path.resolve(__dirname, '../dist'),
+		path: path.resolve(curProcess, './dist'),
 		publicPath: '/',
 		filename: 'public/js/bundle.js',
 	},
 	devtool: 'source-map',
 	devServer: {
-		contentBase: path.resolve(__dirname, '../src/assets'),
+		contentBase: path.resolve(curProcess, 'src/assets'),
 		contentBasePublicPath: '/',
 		historyApiFallback: true,
-		hot: true,
+		hot: false,
 		compress: true,
 		writeToDisk: true,
 	},
@@ -29,7 +34,8 @@ module.exports = {
 		rules: [
 			{
 				test: /\.tsx?$/,
-				exclude: /node_modules/,
+				include: /src/,
+				exclude: [/node_modules/, /cypress/],
 				use: [
 					{
 						loader: 'babel-loader',
@@ -39,10 +45,9 @@ module.exports = {
 								'@babel/preset-react',
 								'@emotion/babel-preset-css-prop',
 							],
-							// don't inject babel code into each file, create a global import for them
 							plugins: [
 								'@babel/plugin-transform-runtime',
-								'react-hot-loader/babel',
+								'@prefresh/babel-plugin',
 								'istanbul',
 							],
 							compact: false,
@@ -60,7 +65,6 @@ module.exports = {
 								module: 'esnext',
 								react: 'preserve',
 								lib: ['dom', 'dom.iterable', 'esnext'],
-								transpileOnly: true,
 							},
 						},
 					},
@@ -68,7 +72,7 @@ module.exports = {
 			},
 			{
 				test: /\.jsx?$/,
-				exclude: /node_modules/,
+				exclude: [/node_modules/, /cypress/],
 				include: /src/,
 				use: [
 					{
@@ -79,15 +83,14 @@ module.exports = {
 								'@babel/react',
 								'@emotion/babel-preset-css-prop',
 							],
-							// don't inject babel code into each file, create a global import for them
 							plugins: [
-								'react-hot-loader/babel',
 								'@babel/plugin-transform-runtime',
+								'@prefresh/babel-plugin',
 								'istanbul',
 							],
-							compact: false,
+							compact: true,
 							cacheDirectory: true,
-							cacheCompression: false,
+							cacheCompression: true,
 							sourceMaps: true,
 							inputSourceMap: true,
 						},
@@ -99,56 +102,32 @@ module.exports = {
 				use: ['style-loader', 'css-loader'],
 			},
 			{
-				test: /\.(woff(2)?|ttf|eot)?$/,
-				use: [
-					{
-						loader: 'file-loader',
-						options: {
-							name: '[name].[ext]',
-							outputPath: 'public/fonts/',
-						},
-					},
-				],
+				// eslint-disable-next-line security/detect-unsafe-regex
+				test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
+				type: 'asset/resource',
+				generator: {
+					filename: 'public/fonts/[name].[ext]',
+				},
 			},
 			{
 				test: /\.(jpg|jpeg|png|webp)?$/,
-				use: {
-					loader: 'file-loader',
-					options: {
-						name: '[name].[ext]',
-						outputPath: 'public/images/',
-					},
-				},
+				type: 'asset',
+				generator: { filename: 'public/images/[name].[ext]' },
 			},
 			{
 				test: /\.gif?$/,
-				use: {
-					loader: 'file-loader',
-					options: {
-						name: '[name].[ext]',
-						outputPath: 'public/gif/',
-					},
-				},
+				type: 'asset',
+				generator: { filename: 'public/gif/[name].[ext]' },
 			},
 			{
 				test: /\.m4v?$/,
-				use: {
-					loader: 'file-loader',
-					options: {
-						name: '[name].[ext]',
-						outputPath: 'public/video/',
-					},
-				},
+				type: 'asset',
+				generator: { filename: 'public/video/[name].[ext]' },
 			},
 			{
 				test: /\.pdf$/,
-				use: {
-					loader: 'file-loader',
-					options: {
-						name: '[name].[ext]',
-						outputPath: 'public/pdf/',
-					},
-				},
+				type: 'asset',
+				generator: { filename: 'public/pdf/[name].[ext]' },
 			},
 			{
 				test: /\.svg$/,
@@ -169,25 +148,26 @@ module.exports = {
 	},
 	resolve: {
 		alias: {
-			'react-dom': '@hot-loader/react-dom',
-			icons: path.resolve(__dirname, '../src/assets/icons'),
-			assetFiles: path.resolve(__dirname, '../src/assets'),
-			pictures: path.resolve(__dirname, '../src/static/Pictures'),
-			assets: path.resolve(__dirname, '../src/utils/assetImports'),
+			react: 'preact/compat',
+			'react-dom/test-utils': 'preact/test-utils',
+			'react-dom': 'preact/compat',
+			icons: path.resolve(curProcess, './src/assets/icons'),
+			assets: path.resolve(curProcess, './src/assets'),
+			pictures: path.resolve(curProcess, './src/static/Pictures'),
 		},
 		modules: ['src', 'node_modules'],
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 	},
-	// prettier-ignore
 	plugins: [
-		new ESLintPlugin,
+		new PreactRefreshPlugin(),
+		new ESLintPlugin(),
 		new HtmlWebpackPlugin({
-			template: path.resolve(__dirname, '../src/index.html'),
-
+			template: path.resolve(curProcess, 'src/index.html'),
 			filename: 'index.html',
 		}),
 		new webpack.DefinePlugin({
-			BACKEND_SERVER_URL: JSON.stringify(process.env.BACKEND_URL),
+			BACKEND_SERVER_URL: JSON.stringify('http://localhost:5050'),
 		}),
+		new CleanWebpackPlugin(),
 	],
 };

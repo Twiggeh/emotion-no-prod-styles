@@ -5,7 +5,7 @@ const Counter: React.FC = () => {
 	const [counter, setCounter] = useState(0);
 	return (
 		<StyledCounter>
-			<StyledCounterDisplay>Current count : {counter}</StyledCounterDisplay>
+			<StyledCounterDisplay>Current counts : {counter}</StyledCounterDisplay>
 			<div>
 				<CounterButton onClick={() => setCounter(c => c + 1)}>+</CounterButton>
 				<CounterButton onClick={() => setCounter(c => c - 1)}>-</CounterButton>
